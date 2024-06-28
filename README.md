@@ -330,3 +330,125 @@
      
 
 *Outcome*: By the end of Day 2, the database schema will be designed, Mongoose models will be created, basic CRUD API endpoints will be set up, and all changes will be committed and pushed to GitHub.
+
+
+#### Day 3: User Authentication System
+
+Objective: Implement a user authentication system using JWT.
+
+Tasks:
+
+1. Set Up User Registration and Login Endpoints
+   - *Create endpoints in users.js for registration and login:*
+     javascript
+     const express = require('express');
+     const router = express.Router();
+     const bcrypt = require('bcrypt');
+     const jwt = require('jsonwebtoken');
+     const User = require('../models/User');
+
+     // Register a new user
+     router.post('/register', async (req, res) => {
+       const { username, email, password } = req.body;
+       try {
+         const existingUser = await User.findOne({ email });
+         if (existingUser) {
+           return res.status(400).json({ message: 'User already exists' });
+         }
+
+         const hashedPassword = await bcrypt.hash(password, 10);
+         const newUser = new User({
+           username,
+           email,
+           password: hashedPassword
+         });
+const savedUser = await newUser.save();
+         res.status(201).json(savedUser);
+       } catch (err) {
+         res.status(500).json({ message: err.message });
+       }
+     });
+
+     // Login a user
+     router.post('/login', async (req, res) => {
+       const { email, password } = req.body;
+       try {
+         const user = await User.findOne({ email });
+         if (!user) {
+           return res.status(400).json({ message: 'User not found' });
+         }
+
+         const isPasswordValid = await bcrypt.compare(password, user.password);
+         if (!isPasswordValid) {
+           return res.status(400).json({ message: 'Invalid password' });
+         }
+
+         const token = jwt.sign({ id: user._id }, 'secretKey', { expiresIn: '1h' });
+         res.json({ token });
+       } catch (err) {
+         res.status(500).json({ message: err.message });
+       }
+     });
+
+     module.exports = router;
+2. Set Up JWT Middleware
+   - *Create middleware directory in backend folder.*
+   - *Create auth.js file in middleware directory:*
+     javascript
+     const jwt = require('jsonwebtoken');
+
+     function authenticateToken(req, res, next) {
+       const authHeader = req.headers['authorization'];
+       const token = authHeader && authHeader.split(' ')[1];
+
+       if (token == null) return res.sendStatus(401);
+
+       jwt.verify(token, 'secretKey', (err, user) => {
+         if (err) return res.sendStatus(403);
+         req.user = user;
+         next();
+       });
+     }
+
+     module.exports = authenticateToken;
+3. Protect Routes with JWT Middleware
+   - *Update index.js to protect specific routes:*
+     javascript
+     const express = require('express');
+     const mongoose = require('mongoose');
+     const app = express();
+     const PORT = process.env.PORT || 5000;
+     const authenticateToken = require('./middleware/auth');
+
+     mongoose.connect('mongodb://localhost:27017/task_management', {
+       useNewUrlParser: true,
+       useUnifiedTopology: true
+     });
+
+     app.use(express.json());
+
+     const tasksRouter = require('./routes/tasks');
+     const usersRouter = require('./routes/users');
+
+     app.use('/tasks', authenticateToken, tasksRouter);
+     app.use('/users', usersRouter);
+
+     app.get('/', (req, res) => {
+       res.send('Hello World!');
+     });
+
+     app.listen(PORT, () => {
+       console.log(Server is running on port ${PORT});
+     });
+4. Commit and Push Changes to GitHub
+   - Stage and commit the changes:
+     bash
+     git add .
+     git commit -m "Implement user authentication system using JWT"
+     
+   - Push to the GitHub repository:
+     bash
+     git push origin main
+     
+
+Outcome: By the end of Day 3, the user authentication system using JWT will be implemented, routes will be protected, and all changes will be committed and pushed to GitHub.
