@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
@@ -28,3 +29,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+=======
+ECHO is on.
+>>>>>>> da9c6abafdd7c885ea787a87ca6b712bc8380468
